@@ -5,6 +5,8 @@ import Axios from 'axios';
 function App() {
   const [results, setResults] = useState([]);
   const [query, setQuery] = useState('react hooks');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const searchInputRef = useRef();
 
@@ -13,11 +15,19 @@ function App() {
   }, []);
 
   const getResults = async () => {
-    const response = await Axios.get(
-      `http://hn.algolia.com/api/v1/search?query=${query}`
-    );
+    setLoading(true);
 
-    setResults(response.data.hits);
+    try {
+      const response = await Axios.get(
+        `http://hn.algolia.com/api/v1/search?query=${query}`
+      );
+
+      setResults(response.data.hits);
+    } catch (error) {
+      setError(error);
+      console.error(error);
+    }
+    setLoading(false);
   };
 
   const handleSearch = event => {
@@ -44,14 +54,19 @@ function App() {
           Clear
         </button>
       </form>
+      {loading ? (
+        <div>Loading results ....</div>
+      ) : (
+        <ul>
+          {results.map(result => (
+            <li key={result.objectID}>
+              <a href="{result.url}">{result.title}</a>
+            </li>
+          ))}
+        </ul>
+      )}
 
-      <ul>
-        {results.map(result => (
-          <li key={result.objectID}>
-            <a href="{result.url}">{result.title}</a>
-          </li>
-        ))}
-      </ul>
+      {error && <div>{error.message}</div>}
     </div>
   );
 }
